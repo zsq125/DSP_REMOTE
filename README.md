@@ -62,6 +62,18 @@ On startup the terminal prints a **pairing QR code + pairing info** (the token i
 > `-LanHost`: use it to force the address written into the QR code when auto-detection picks the
 > wrong adapter (common on Tailscale / multi-NIC machines).
 
+### 2.1.1 Re-pairing after a token rotation
+
+Rotating the gateway token (`POST /rc/v1/pair/rotate`, or delete `.state/token.txt` and restart)
+invalidates every paired phone immediately (requests start returning `401`).
+
+On the phone: open the sidebar -> **gear icon** (re-pair) -> either **Open scanner** (scan the QR the
+gateway prints) or type `host:port` + the 32-hex token -> **Connect**. The page is cancellable, so you
+are never locked out — and you do **not** need `pm clear` (which would also wipe the local history).
+
+> Older builds only showed the pairing page while *unpaired*, so a rotated token forced `pm clear`.
+> The gear entry exists precisely to avoid that.
+
 ### 2.2 Build and install the app
 
 ```powershell

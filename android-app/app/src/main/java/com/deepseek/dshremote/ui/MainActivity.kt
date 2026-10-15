@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import com.deepseek.dshremote.DshRemoteApp
 import com.deepseek.dshremote.data.DshRemoteStore
 import com.deepseek.dshremote.data.DshRemoteStore.PairingReadResult
+import com.deepseek.dshremote.core.PairingInfo
 import com.deepseek.dshremote.core.PairingParseResult
 import com.deepseek.dshremote.core.PairingParser
 import com.deepseek.dshremote.core.SidebarState
@@ -127,6 +129,28 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
     var baseUrl by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var pairingError by remember { mutableStateOf<String?>(null) }
+    // ── 2026-10-15 用户报告：网关轮换 token 后 App 无法重新配对 ──────────
+    // 旧行为：配对页只在 paired == false 时出现，而 App 里存着旧 token（paired=true）
+    // ⇒ 只会一直 401，用户进不去配对页，只能 `pm clear` 清数据（连带丢本地历史）。
+    // 另：ScannerScreen（扫码页）**写好了却零引用**，配对页的「Open scanner」只发了
+    // 一次相机权限、没人消费（点了像没反应）。
+    // 现在：① 已配对时也能进配对页（repairing），可取消返回；
+    //       ② 扫码页真正接上（相机权限由 ScannerScreen 内部按需申请）。
+    var repairing by remember { mutableStateOf(false) }
+    var scannerOpen by remember { mutableStateOf(false) }
+    /** 配对成功后的统一落库 + 生效（手动输入 / 扫码共用一条路径）。 */
+    val applyPairing: (PairingInfo) -> Unit = { info ->
+        scope.launch {
+            app.store.savePairing(info)
+            baseUrl = info.baseUrl
+            token = info.token
+            pairingError = null
+            repairing = false
+            scannerOpen = false
+            paired = true
+            ConnectionService.start(context)
+        }
+    }
 
     /**
      * The API client and the workspace repo must be re-created once pairing is
@@ -585,27 +609,42 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
             )
         }
 
-    when (paired) {
-        null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        false -> PairingView(
-            error = pairingError,
-            onRequestCamera = onRequestCamera,
-            onManual = { hostPort, tk ->
-                when (val r = PairingParser.parseManual(hostPort, tk)) {
-                    is PairingParseResult.Ok -> {
-                        pairingError = null
-                        scope.launch {
-                            app.store.savePairing(r.info)
-                            baseUrl = r.info.baseUrl; token = r.info.token
-                            paired = true
-                            ConnectionService.start(context)
+    when {
+        paired == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        // 未配对，或用户主动点了「重新配对」（paired 仍为 true，但允许换 token）。
+        paired == false || repairing -> {
+            if (scannerOpen) {
+                // 扫码页：相机权限由它自己按需申请（旧代码只发权限、从不显示本页）。
+                ScannerScreen(
+                    onResult = { payload ->
+                        when (val r = PairingParser.parse(payload)) {
+                            is PairingParseResult.Ok -> applyPairing(r.info)
+                            is PairingParseResult.Invalid -> {
+                                pairingError = r.reason
+                                scannerOpen = false
+                            }
                         }
-                    }
-                    is PairingParseResult.Invalid -> pairingError = r.reason
-                }
-            },
-        )
-        true -> {
+                    },
+                    onClose = { scannerOpen = false },
+                )
+            } else {
+                PairingView(
+                    error = pairingError,
+                    onRequestCamera = { scannerOpen = true },
+                    onManual = { hostPort, tk ->
+                        when (val r = PairingParser.parseManual(hostPort, tk)) {
+                            is PairingParseResult.Ok -> applyPairing(r.info)
+                            is PairingParseResult.Invalid -> pairingError = r.reason
+                        }
+                    },
+                    // 已配对状态下进来换 token ⇒ 给一个「返回」，不把用户困在配对页。
+                    onCancel = if (paired == true) {
+                        { repairing = false; pairingError = null }
+                    } else null,
+                )
+            }
+        }
+        else -> {
             val c = colors()
             Row(Modifier.fillMaxSize().background(c.chatBackground)) {
                 // ---- Sidebar (workspaces + MAIN sessions only) ----
@@ -618,9 +657,19 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
                     ) {
                         // ── 全局搜索入口（2026-10-13 用户需求 3：DeepSeek 式放大镜）──
                         // 侧栏只留一个放大镜按钮；点开全屏搜索页（SearchOverlay）。
-                        IconButton(onClick = { searchOpen = true }) {
-                            Icon(Icons.Filled.Search, contentDescription = "搜索全部会话",
-                                tint = c.textSecondary)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = { searchOpen = true }) {
+                                Icon(Icons.Filled.Search, contentDescription = "搜索全部会话",
+                                    tint = c.textSecondary)
+                            }
+                            // ── 2026-10-15：重新配对 / 更换 token ────────────────
+                            // 网关轮换 token 后，App 存着旧 token 只会 401；旧代码只能
+                            // `pm clear` 清数据（顺带丢本地历史）。这里给一个正经入口：
+                            // 进配对页（可取消返回），扫码或手输新 host+token 即可换绑。
+                            IconButton(onClick = { repairing = true; pairingError = null }) {
+                                Icon(Icons.Filled.Settings, contentDescription = "重新配对 / 更换 token",
+                                    tint = c.textSecondary)
+                            }
                         }
                         Sidebar(
                             workspaces = workspaces,
@@ -962,7 +1011,13 @@ private fun Sidebar(
 }
 
 @Composable
-private fun PairingView(error: String?, onRequestCamera: () -> Unit, onManual: (String, String) -> Unit) {
+private fun PairingView(
+    error: String?,
+    onRequestCamera: () -> Unit,
+    onManual: (String, String) -> Unit,
+    /** 非空 = 已配对时进来换 token，给用户一个「返回」（不把他困在配对页）。 */
+    onCancel: (() -> Unit)? = null,
+) {
     var host by remember { mutableStateOf("") }
     var tk by remember { mutableStateOf("") }
     val c = colors()
@@ -984,6 +1039,10 @@ private fun PairingView(error: String?, onRequestCamera: () -> Unit, onManual: (
         )
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = { onManual(host.trim(), tk.trim()) }) { Text("Connect") }
+        if (onCancel != null) {
+            Spacer(Modifier.height(4.dp))
+            TextButton(onClick = onCancel) { Text("Cancel") }
+        }
         if (error != null) {
             Spacer(Modifier.height(12.dp))
             Text(error, color = c.errorText)
