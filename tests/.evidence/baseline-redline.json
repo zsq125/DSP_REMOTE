@@ -1,0 +1,6 @@
+{
+  "note": "红线基线快照：测试前记录，用于确认未误伤用户的 DSH 实例",
+  "capturedAt": "manual",
+  "redLine": { "pid": 7072, "port": 3080, "aliveAtStart": true },
+  "freePortsExpected": [8765, 3099]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@local/dsh-remote-gateway",
+  "version": "1.0.0",
+  "description": "DSH 手机远程控制 PC 端网关（Cordis 插件，自建 node:http 服务，协议见 docs/01-架构与接口规范-v1.md）",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "qr": "node print-qr.mjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "qrcode": "1.5.4",
+    "ws": "8.22.0"
+  }
+}

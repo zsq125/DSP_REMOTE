@@ -1,0 +1,173 @@
+﻿{
+    "at":  "2026-10-11T07:46:45.3477178+08:00",
+    "summary":  {
+                    "failed":  2,
+                    "skipped":  0,
+                    "total":  27,
+                    "passed":  25
+                },
+    "cases":  [
+                  {
+                      "id":  "ENV-01",
+                      "name":  "JDK present",
+                      "ok":  true,
+                      "detail":  ""
+                  },
+                  {
+                      "id":  "ENV-02",
+                      "name":  "aapt2 present",
+                      "ok":  true,
+                      "detail":  "E:\\system\\android-sdk\\build-tools\\34.0.0\\aapt2.exe"
+                  },
+                  {
+                      "id":  "ENV-03",
+                      "name":  "apksigner present",
+                      "ok":  true,
+                      "detail":  "E:\\system\\android-sdk\\build-tools\\34.0.0\\apksigner.bat"
+                  },
+                  {
+                      "id":  "ENV-04",
+                      "name":  "platforms;android-34 present",
+                      "ok":  true,
+                      "detail":  ""
+                  },
+                  {
+                      "id":  "BUILD-01a",
+                      "name":  "gradlew.bat present",
+                      "ok":  true,
+                      "detail":  "F:\\project\\deepseekharness_remote_control\\android-app\\gradlew.bat"
+                  },
+                  {
+                      "id":  "BUILD-01b",
+                      "name":  "gradle-wrapper.jar present",
+                      "ok":  true,
+                      "detail":  ""
+                  },
+                  {
+                      "id":  "BUILD-02b",
+                      "name":  "app-debug.apk exists",
+                      "ok":  true,
+                      "detail":  "F:\\project\\deepseekharness_remote_control\\android-app\\app\\build\\outputs\\apk\\debug\\app-debug.apk"
+                  },
+                  {
+                      "id":  "BUILD-04",
+                      "name":  "unit test failures == 0",
+                      "ok":  true,
+                      "detail":  "failures=0"
+                  },
+                  {
+                      "id":  "BUILD-04c",
+                      "name":  "unit test errors == 0",
+                      "ok":  true,
+                      "detail":  "errors=0"
+                  },
+                  {
+                      "id":  "BUILD-04d",
+                      "name":  "unit test count \u003e= 60",
+                      "ok":  false,
+                      "detail":  "tests=0"
+                  },
+                  {
+                      "id":  "BUILD-05",
+                      "name":  "lintDebug has 0 Error",
+                      "ok":  true,
+                      "detail":  "errors=0 "
+                  },
+                  {
+                      "id":  "MAN-01",
+                      "name":  "package == com.deepseek.dshremote",
+                      "ok":  true,
+                      "detail":  "got=com.deepseek.dshremote"
+                  },
+                  {
+                      "id":  "MAN-02a",
+                      "name":  "minSdk == 26",
+                      "ok":  true,
+                      "detail":  "got=26"
+                  },
+                  {
+                      "id":  "MAN-02b",
+                      "name":  "targetSdk == 34",
+                      "ok":  true,
+                      "detail":  "got=34"
+                  },
+                  {
+                      "id":  "MAN-03-INTERNET",
+                      "name":  "permission android.permission.INTERNET",
+                      "ok":  true,
+                      "detail":  "android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.CAMERA,android.permission.FOREGROUND_SERVICE,android.permission.FOREGROUND_SERVICE_DATA_SYNC,android.permission.POST_NOTIFICATIONS,android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,com.deepseek.dshremote.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+                  },
+                  {
+                      "id":  "MAN-03-FOREGROUND_SERVICE",
+                      "name":  "permission android.permission.FOREGROUND_SERVICE",
+                      "ok":  true,
+                      "detail":  "android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.CAMERA,android.permission.FOREGROUND_SERVICE,android.permission.FOREGROUND_SERVICE_DATA_SYNC,android.permission.POST_NOTIFICATIONS,android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,com.deepseek.dshremote.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+                  },
+                  {
+                      "id":  "MAN-03-ACCESS_NETWORK_STATE",
+                      "name":  "permission android.permission.ACCESS_NETWORK_STATE",
+                      "ok":  true,
+                      "detail":  "android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.CAMERA,android.permission.FOREGROUND_SERVICE,android.permission.FOREGROUND_SERVICE_DATA_SYNC,android.permission.POST_NOTIFICATIONS,android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,com.deepseek.dshremote.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+                  },
+                  {
+                      "id":  "MAN-03-CAMERA",
+                      "name":  "permission android.permission.CAMERA",
+                      "ok":  true,
+                      "detail":  "android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.CAMERA,android.permission.FOREGROUND_SERVICE,android.permission.FOREGROUND_SERVICE_DATA_SYNC,android.permission.POST_NOTIFICATIONS,android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,com.deepseek.dshremote.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+                  },
+                  {
+                      "id":  "MAN-03-POST_NOTIFICATIONS",
+                      "name":  "permission android.permission.POST_NOTIFICATIONS",
+                      "ok":  true,
+                      "detail":  "android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.CAMERA,android.permission.FOREGROUND_SERVICE,android.permission.FOREGROUND_SERVICE_DATA_SYNC,android.permission.POST_NOTIFICATIONS,android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,com.deepseek.dshremote.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+                  },
+                  {
+                      "id":  "MAN-03-REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+                      "name":  "permission android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+                      "ok":  true,
+                      "detail":  "android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.CAMERA,android.permission.FOREGROUND_SERVICE,android.permission.FOREGROUND_SERVICE_DATA_SYNC,android.permission.POST_NOTIFICATIONS,android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,com.deepseek.dshremote.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+                  },
+                  {
+                      "id":  "MAN-03-fgstype",
+                      "name":  "has FOREGROUND_SERVICE_* (Android 14 type permission)",
+                      "ok":  true,
+                      "detail":  "android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.CAMERA,android.permission.FOREGROUND_SERVICE,android.permission.FOREGROUND_SERVICE_DATA_SYNC,android.permission.POST_NOTIFICATIONS,android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,com.deepseek.dshremote.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+                  },
+                  {
+                      "id":  "MAN-04a",
+                      "name":  "manifest has Service node",
+                      "ok":  true,
+                      "detail":  ""
+                  },
+                  {
+                      "id":  "MAN-04b",
+                      "name":  "Service declares foregroundServiceType",
+                      "ok":  true,
+                      "detail":  ""
+                  },
+                  {
+                      "id":  "MAN-04c",
+                      "name":  "foregroundServiceType has a value",
+                      "ok":  true,
+                      "detail":  "foregroundServiceType(0x01010599)"
+                  },
+                  {
+                      "id":  "MAN-06",
+                      "name":  "cleartext: usesCleartextTraffic OR networkSecurityConfig",
+                      "ok":  true,
+                      "detail":  "nsc=True cleartext=True"
+                  },
+                  {
+                      "id":  "BUILD-10",
+                      "name":  "apksigner verify passes (no DOES NOT VERIFY)",
+                      "ok":  true,
+                      "detail":  "Verifies\r\nVerified using v1 scheme (JAR signing): false\r\nVerified using v2 scheme (APK Signature Scheme v2): true\r\nVerified using v3 scheme (APK Signature Scheme v3): false\r\nVerified using v3.1 scheme"
+                  },
+                  {
+                      "id":  "BUILD-10b",
+                      "name":  "at least one scheme verified (v1/v2/v3)",
+                      "ok":  false,
+                      "detail":  ""
+                  }
+              ]
+}

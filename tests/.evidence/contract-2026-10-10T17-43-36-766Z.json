@@ -1,0 +1,505 @@
+{
+  "title": "contract @ http://127.0.0.1:8799",
+  "at": "2026-10-10T17:43:36.769Z",
+  "durationMs": 41117,
+  "summary": {
+    "total": 82,
+    "passed": 82,
+    "failed": 0,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "id": "PROTO-G01",
+      "name": "ping 200 without auth",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "PROTO-G08",
+      "name": "ping response has v=1",
+      "ok": true,
+      "detail": "{\"v\":1,\"name\":\"MOCKPC\",\"version\":\"1.0.0\",\"pairRequired\":true,\"ts\":1791654175697}"
+    },
+    {
+      "id": "PROTO-G02",
+      "name": "ping has name/version/pairRequired/ts(int-ms)",
+      "ok": true,
+      "detail": "{\"v\":1,\"name\":\"MOCKPC\",\"version\":\"1.0.0\",\"pairRequired\":true,\"ts\":1791654175697}"
+    },
+    {
+      "id": "PROTO-G04",
+      "name": "no token -> 401 unauthorized",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G05",
+      "name": "wrong token -> 401 unauthorized",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G06",
+      "name": "non-Bearer -> 401 unauthorized",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-S01",
+      "name": "status 200 + fields",
+      "ok": true,
+      "detail": "{\"v\":1,\"dsh\":{\"ok\":true},\"sessions\":{\"total\":3,\"running\":1},\"uptimeMs\":1234,\"ts\":1791654175722}"
+    },
+    {
+      "id": "GAP-19",
+      "name": "dsh.ok=false still returns 200",
+      "ok": true,
+      "detail": "ok=true"
+    },
+    {
+      "id": "REST-S01b",
+      "name": "uptimeMs non-decreasing",
+      "ok": true,
+      "detail": "1234 -> 1234"
+    },
+    {
+      "id": "REST-L01",
+      "name": "session list fields complete",
+      "ok": true,
+      "detail": "{\"id\":\"sess_alpha\",\"title\":\"修复登录超时\",\"status\":\"running\",\"createdAt\":1791654082612,\"updatedAt\":1791654172612,\"cwd\":\"F:\\\\project\\\\x\",\"messageCount\":2,\"lastMessagePreview\":\"跑一下测试\",\"agentAvailable\":true}"
+    },
+    {
+      "id": "REST-L02",
+      "name": "status enum valid",
+      "ok": true,
+      "detail": "[\"running\",\"idle\",\"unknown\"]"
+    },
+    {
+      "id": "REST-L03",
+      "name": "timestamps int-ms and updated>=created",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-03a",
+      "name": "sessions sorted by updatedAt desc",
+      "ok": true,
+      "detail": "[1791654172612,1791654172612,1791654172612]"
+    },
+    {
+      "id": "REST-L11",
+      "name": "lastMessagePreview single-line",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L04",
+      "name": "limit=2 honored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L05",
+      "name": "full paging: no dup, no loss",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "XREF-ANCHOR",
+      "name": "sessions available for later cases",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "id": "REST-L06a",
+      "name": "sessions?limit=0 -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-03b",
+      "name": "sessions?limit=201 -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-03c",
+      "name": "sessions?limit=abc -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L06b",
+      "name": "sessions?limit=-5 -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L07",
+      "name": "bad cursor -> not 500",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G11",
+      "name": "unknown path -> 404 not_found",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-M01",
+      "name": "message fields complete",
+      "ok": true,
+      "detail": "{\"v\":1,\"items\":[{\"seq\":101,\"role\":\"user\",\"text\":\"跑一下测试\",\"ts\":1791654172612,\"status\":\"final\",\"messageId\":\"m101\"},{\"seq\":102,\"role\":\"assistant\",\"text\":\"[tool] shell\",\"ts\":1791654172612,\"status\":\"final\","
+    },
+    {
+      "id": "REST-M02",
+      "name": "seq strictly ascending",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-20",
+      "name": "messages returns nextCursor key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-M03",
+      "name": "before-paging: no dup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-M05",
+      "name": "unknown session messages -> 404",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-C01",
+      "name": "POST /sessions -> 200 + id",
+      "ok": true,
+      "detail": "{\"v\":1,\"id\":\"sess_new_1791654177284\"}"
+    },
+    {
+      "id": "REST-C04",
+      "name": "cwd wrong type -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G06",
+      "name": "POST /sessions no token -> 401",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P01",
+      "name": "prompt 200 accepted + messageId + sessionId",
+      "ok": true,
+      "detail": "{\"v\":1,\"accepted\":true,\"messageId\":\"m104\",\"sessionId\":\"sess_new_1791654177284\"}"
+    },
+    {
+      "id": "REST-P02a",
+      "name": "idempotent requestId -> same messageId",
+      "ok": true,
+      "detail": "m104 vs m104"
+    },
+    {
+      "id": "REST-P02b",
+      "name": "idempotent requestId (3rd) -> same messageId",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P02c",
+      "name": "NO duplicate enqueue (text appears exactly once)",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "REST-P03",
+      "name": "different requestId -> 2 entries",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "id": "REST-P04",
+      "name": "missing text -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P05",
+      "name": "text not string -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P06",
+      "name": "blank text -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P07",
+      "name": "missing requestId -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-X05",
+      "name": "cancel idempotent 3x -> 200 ok:true",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G13",
+      "name": "non-JSON body -> not 500",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-06",
+      "name": "unknown session + invalid body -> 404 before 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P08",
+      "name": "unknown session prompt -> 404",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-X03",
+      "name": "unknown session cancel -> 404",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-R01",
+      "name": "rotate returns v/token(32hex)/fp/ts",
+      "ok": true,
+      "detail": "{\"v\":1,\"token\":\"09255b2633fdd4e6295a490add80cb69\",\"fp\":\"09255b26\",\"ts\":1791654177365}"
+    },
+    {
+      "id": "REST-R01b",
+      "name": "rotate fp==token[:8] and differs from old",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-R06",
+      "name": "existing WS survives rotate (stays OPEN, still works)",
+      "ok": true,
+      "detail": "hello=true"
+    },
+    {
+      "id": "REST-R02",
+      "name": "old token -> 401 immediately",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-R03",
+      "name": "new token -> 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-R07",
+      "name": "old token new WS -> close 4401",
+      "ok": true,
+      "detail": "code=4401"
+    },
+    {
+      "id": "WS-02",
+      "name": "no token -> zero frames then close 4401",
+      "ok": true,
+      "detail": "code=4401 frames=0"
+    },
+    {
+      "id": "WS-03",
+      "name": "wrong token -> zero frames then close 4401",
+      "ok": true,
+      "detail": "code=4401 frames=0"
+    },
+    {
+      "id": "WS-02b",
+      "name": "auth failure judged by close code only (v1.1)",
+      "ok": true,
+      "detail": "GAP-09 ruling applied"
+    },
+    {
+      "id": "WS-01",
+      "name": "valid token -> first frame is hello",
+      "ok": true,
+      "detail": "timeout"
+    },
+    {
+      "id": "WS-04",
+      "name": "hello fields v/server.name/server.version/sessions",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"hello\",\"server\":{\"name\":\"MOCKPC\",\"version\":\"1.0.0\"},\"sessions\":[{\"id\":\"sess_alpha\",\"title\":\"修复登录超时\",\"status\":\"running\",\"createdAt\":1791654082612,\"updatedAt\":1791654172612,\"cwd\":\"F:\\\\pro"
+    },
+    {
+      "id": "WS-04b",
+      "name": "hello.sessions items match REST shape",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-05",
+      "name": "ping -> pong <=10s, ts int",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"pong\",\"ts\":1791654177581}"
+    },
+    {
+      "id": "WS-07",
+      "name": "subscribe -> ack (id exact, ok=true)",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c1\",\"ok\":true}"
+    },
+    {
+      "id": "WS-09",
+      "name": "NOT-subscribed session: no message events",
+      "ok": true,
+      "detail": "leaked=0"
+    },
+    {
+      "id": "WS-10",
+      "name": "subscribed session: session.event(kind=message) pushed",
+      "ok": true,
+      "detail": "timeout"
+    },
+    {
+      "id": "WS-13",
+      "name": "session.event fields complete",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"session.event\",\"sessionId\":\"sess_new_1791654177284\",\"event\":{\"kind\":\"message\",\"role\":\"user\",\"text\":\"subscribed probe\",\"seq\":107,\"ts\":1791654180598,\"status\":\"final\",\"messageId\":\"m107\"}}"
+    },
+    {
+      "id": "WS-16",
+      "name": "prompt ack carries sessionId/requestId/messageId (GAP-10)",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c3\",\"ok\":true,\"sessionId\":\"sess_new_1791654177284\",\"requestId\":\"ack-1791654180601\",\"messageId\":\"m108\"}"
+    },
+    {
+      "id": "WS-17",
+      "name": "WS idempotency: same requestId -> same messageId",
+      "ok": true,
+      "detail": "c3=m108 c5=m108"
+    },
+    {
+      "id": "WS-17b",
+      "name": "WS idempotency: no duplicate enqueue",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "WS-08",
+      "name": "error frame carries same id + valid code",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c6\",\"code\":\"not_found\",\"message\":\"no session\"}"
+    },
+    {
+      "id": "WS-19",
+      "name": "prompt invalid field -> error(invalid_request) same id",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c7\",\"code\":\"invalid_request\",\"message\":\"text\"}"
+    },
+    {
+      "id": "WS-20",
+      "name": "cancel -> ack id=c4",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c4\",\"ok\":true}"
+    },
+    {
+      "id": "WS-21",
+      "name": "cancel unknown session -> error(not_found) same id",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c9z\",\"code\":\"not_found\",\"message\":\"no session\"}"
+    },
+    {
+      "id": "WS-15a",
+      "name": "unsubscribe -> ack id=c2",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c2\",\"ok\":true}"
+    },
+    {
+      "id": "WS-15",
+      "name": "after unsubscribe: no message events",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-22",
+      "name": "unknown type -> error id=c9 (not silently dropped)",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c9\",\"code\":\"invalid_request\",\"message\":\"unknown type\"}"
+    },
+    {
+      "id": "WS-33",
+      "name": "v!=1 frame -> handled, connection stays open",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c10\",\"code\":\"invalid_request\",\"message\":\"bad v\"}"
+    },
+    {
+      "id": "WS-24",
+      "name": "connection usable after non-JSON frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-26a",
+      "name": "3 concurrent conns with same token, all get hello",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-26b",
+      "name": "both clients receive the same event",
+      "ok": true,
+      "detail": "A=true B=true"
+    },
+    {
+      "id": "GAP-13",
+      "name": "ack goes only to originating conn (no broadcast)",
+      "ok": true,
+      "detail": "other conn got 0 frames"
+    },
+    {
+      "id": "WS-28",
+      "name": "closing one conn does not affect the other",
+      "ok": true,
+      "detail": "readyState=1"
+    },
+    {
+      "id": "WS-06",
+      "name": "server does not disconnect after 30s idle",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-01",
+      "name": "default env: hook route -> 404 (no leak to production)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-07",
+      "name": "hook without token -> 401/404 (never 200)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-S01c",
+      "name": "official endpoints OK while hook disabled",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

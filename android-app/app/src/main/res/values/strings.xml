@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DSH 远程控制</string>
+    <string name="notif_channel_name">DSH 连接</string>
+    <string name="notif_channel_desc">保持与电脑端 DSH 网关的长连接</string>
+    <string name="notif_title">DSH 已连接</string>
+    <string name="notif_text">正在监听任务更新</string>
+</resources>

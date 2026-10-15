@@ -1,0 +1,121 @@
+{
+  "title": "xref @ http://127.0.0.1:8765",
+  "at": "2026-10-10T22:38:03.296Z",
+  "durationMs": 2565,
+  "summary": {
+    "total": 18,
+    "passed": 16,
+    "failed": 2,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "id": "XREF-00",
+      "name": "workspace.json parsed",
+      "ok": true,
+      "detail": "sessions=20"
+    },
+    {
+      "id": "XREF-00b",
+      "name": "found session.v4.jsonl.zstd files",
+      "ok": true,
+      "detail": "count=129"
+    },
+    {
+      "id": "XREF-01a",
+      "name": "every workspace.json session is exposed by gateway (no missing)",
+      "ok": false,
+      "detail": "missing=11:session-c3a7204d-586d-40df-a64b-ceea1df60be5,session-90308792-16e7-4202-ba7a-98bcb219131a,session-a1361fcc-8229-4e54-a7d2-d1ad127c3c4a,session-9c624bfe-41ab-48d6-9c43-459fddbcc7e9,session-ab788357-558a-4fe6-a94e-5f17a5cd85e7"
+    },
+    {
+      "id": "XREF-01b",
+      "name": "gateway exposes no fabricated sessions (extra must exist in projcache)",
+      "ok": true,
+      "detail": "extra=41 (real=41, ghost=0)"
+    },
+    {
+      "id": "XREF-01c",
+      "name": "extra-but-real sessions are recently created (workspace.json lag, not a bug)",
+      "ok": true,
+      "detail": "real=41"
+    },
+    {
+      "id": "XREF-01d",
+      "name": "nextCursor is non-null when more sessions remain (pagination not truncated)",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "id": "XREF-02",
+      "name": "cwd matches workspace.json",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "XREF-03",
+      "name": "title matches session_projcache rows.title.val (authoritative)",
+      "ok": true,
+      "detail": "checked=9 "
+    },
+    {
+      "id": "XREF-03b",
+      "name": "workspace.json title is a workspace name (not compared to session title)",
+      "ok": true,
+      "detail": "corrected expectation: workspace title != session title by design"
+    },
+    {
+      "id": "XREF-04a",
+      "name": "sampled sessions with jsonl found",
+      "ok": true,
+      "detail": "n=3"
+    },
+    {
+      "id": "XREF-04",
+      "name": "messageCount == /messages actual item count (same source, self-consistent)",
+      "ok": true,
+      "detail": "bad=0 session-e1b1924e-1546-4098-8923-b3e8e2e7d616 /messages HTTP 400 | session-0ccf9ebd-2adb-4642-8c12-4938c6652a93 /messages HTTP 400 | session-c3a7204d-586d-40df-a64b-ceea1df60be5 missing in api"
+    },
+    {
+      "id": "XREF-05",
+      "name": "lastMessagePreview consistent with last message text",
+      "ok": true,
+      "detail": "bad=0"
+    },
+    {
+      "id": "XREF-07",
+      "name": "sampled sessions exist in projcache (real PC sessions)",
+      "ok": false,
+      "detail": "projcache hits=0"
+    },
+    {
+      "id": "XREF-06",
+      "name": "seq monotonic ascending (sampled)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "XREF-08",
+      "name": "PC data files unchanged (read-only)",
+      "ok": true,
+      "detail": "changed=0"
+    },
+    {
+      "id": "XREF-09a",
+      "name": "PID 7072 (user DSH) still alive",
+      "ok": true,
+      "detail": "must not be killed by tests"
+    },
+    {
+      "id": "XREF-09b",
+      "name": "port 3080 still listening",
+      "ok": true,
+      "detail": "user instance must keep serving"
+    },
+    {
+      "id": "XREF-09c",
+      "name": "gateway port 8765 listening",
+      "ok": true,
+      "detail": "gateway bound to 8765, not 3080"
+    }
+  ]
+}

@@ -1,0 +1,673 @@
+{
+  "title": "contract @ http://127.0.0.1:8765",
+  "at": "2026-10-10T23:10:12.132Z",
+  "durationMs": 110530,
+  "summary": {
+    "total": 110,
+    "passed": 105,
+    "failed": 4,
+    "skipped": 1
+  },
+  "cases": [
+    {
+      "id": "PROTO-G01",
+      "name": "ping 200 without auth",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "PROTO-G08",
+      "name": "ping response has v=1",
+      "ok": true,
+      "detail": "{\"v\":1,\"name\":\"DESKTOP-1V6A47A\",\"version\":\"1.0.0\",\"pairRequired\":true,\"ts\":1791673701711}"
+    },
+    {
+      "id": "PROTO-G02",
+      "name": "ping has name/version/pairRequired/ts(int-ms)",
+      "ok": true,
+      "detail": "{\"v\":1,\"name\":\"DESKTOP-1V6A47A\",\"version\":\"1.0.0\",\"pairRequired\":true,\"ts\":1791673701711}"
+    },
+    {
+      "id": "PROTO-G04",
+      "name": "no token -> 401 unauthorized",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G05",
+      "name": "wrong token -> 401 unauthorized",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G06",
+      "name": "non-Bearer -> 401 unauthorized",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-S01",
+      "name": "status 200 + fields",
+      "ok": true,
+      "detail": "{\"v\":1,\"dsh\":{\"ok\":true},\"sessions\":{\"total\":139,\"running\":2},\"uptimeMs\":208171,\"ts\":1791673702111}"
+    },
+    {
+      "id": "GAP-19",
+      "name": "dsh.ok=false still returns 200",
+      "ok": true,
+      "detail": "ok=true"
+    },
+    {
+      "id": "REST-S01b",
+      "name": "uptimeMs non-decreasing",
+      "ok": true,
+      "detail": "208437 -> 210960"
+    },
+    {
+      "id": "REST-L01",
+      "name": "session list fields complete",
+      "ok": true,
+      "detail": "{\"id\":\"session-b983dcc3-5ef8-4a8b-8ef6-3e1fa1e72945\",\"title\":\"run test rc-1791673688995\",\"status\":\"running\",\"createdAt\":1791673688954,\"updatedAt\":1791673689051,\"cwd\":\"F:\\\\project\",\"messageCount\":7,\"lastMessagePreview\":\"[tool] grep\",\"agentAvailable\":true}"
+    },
+    {
+      "id": "REST-L02",
+      "name": "status enum valid",
+      "ok": true,
+      "detail": "[\"running\",\"idle\",\"idle\",\"running\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\",\"idle\"]"
+    },
+    {
+      "id": "REST-L03",
+      "name": "timestamps int-ms and updated>=created",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-03a",
+      "name": "sessions sorted by updatedAt desc",
+      "ok": true,
+      "detail": "[1791673689051,1791673665407,1791673644453,1791673580227,1791672607497,1791672464428,1791672250518,1791672248239,1791672169441,1791672156815,1791672083721,1791672063930,1791671661210,1791671566397,1791671433590,1791671413902,1791671308488,1791671222911,1791671164818,1791671012327,1791670964356,1791670809760,1791670058143,1791670039300,1791669953903,1791669938876,1791669870660,1791669852613,1791669756859,1791669696782,1791669693506,1791669495946,1791656321743,1791651351849,1791651351839,1791585478666,1791585131332,1791561913431,1791541529728,1791541353933,1791539456636,1791538727761,1791524737530,1791524636803,1791478527304,1791476099455,1791476099432,1791473686432,1791472579857,1791470905262]"
+    },
+    {
+      "id": "REST-L11",
+      "name": "lastMessagePreview single-line",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L04",
+      "name": "limit=2 honored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L05",
+      "name": "full paging: no dup, no loss",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "XREF-ANCHOR",
+      "name": "sessions available for later cases",
+      "ok": true,
+      "detail": "count=139"
+    },
+    {
+      "id": "D1-00",
+      "name": "total session count (truth via limit=200)",
+      "ok": true,
+      "detail": "total=139"
+    },
+    {
+      "id": "D1-20",
+      "name": "paging[20] returns ALL 139 sessions, no dup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "D1-miss-20",
+      "name": "paging[20] no missing vs limit=200 truth",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "D1-gap-20",
+      "name": "paging[20] set equality (mixed-id codepoint order, no gaps)",
+      "ok": true,
+      "detail": "uniq=139/139 missing=0"
+    },
+    {
+      "id": "D1-50",
+      "name": "paging[50] returns ALL 139 sessions, no dup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "D1-miss-50",
+      "name": "paging[50] no missing vs limit=200 truth",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "D1-gap-50",
+      "name": "paging[50] set equality (mixed-id codepoint order, no gaps)",
+      "ok": true,
+      "detail": "uniq=139/139 missing=0"
+    },
+    {
+      "id": "D1-default",
+      "name": "paging[default] returns ALL 139 sessions, no dup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "D1-miss-default",
+      "name": "paging[default] no missing vs limit=200 truth",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "D1-gap-default",
+      "name": "paging[default] set equality (mixed-id codepoint order, no gaps)",
+      "ok": true,
+      "detail": "uniq=139/139 missing=0"
+    },
+    {
+      "id": "D1-cursor",
+      "name": "nextCursor non-null when more items remain",
+      "ok": true,
+      "detail": "items=20/139 cursor=MTc5MTY3MTAxMjMyN3xzZXNzaW9uLTBlYjdjOTQxLWYwZmItNGE4Zi1iNjA1LTEzMWQwZjUyYTVkZQ"
+    },
+    {
+      "id": "REST-L06a",
+      "name": "sessions?limit=0 -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-03b",
+      "name": "sessions?limit=201 -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-03c",
+      "name": "sessions?limit=abc -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L06b",
+      "name": "sessions?limit=-5 -> 400 invalid_request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-L07",
+      "name": "bad cursor -> not 500",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G11",
+      "name": "unknown path -> 404 not_found",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-M01",
+      "name": "message fields complete",
+      "ok": true,
+      "detail": "{\"v\":1,\"items\":[{\"seq\":8,\"role\":\"system\",\"text\":\"You are an AI agent powered by DeepSeek Harness.\\n\\nYou are a coding agent powered by the cn:deepseek-v4.1-flash model.\\n\\n# 项目开发规则（Felix 项目开发规则）\\n\\n以下"
+    },
+    {
+      "id": "REST-M02",
+      "name": "seq strictly ascending",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-20",
+      "name": "messages returns nextCursor key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-M03",
+      "name": "before-paging: no dup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-M05",
+      "name": "unknown session messages -> 404",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-C01",
+      "name": "POST /sessions -> 200 + id",
+      "ok": true,
+      "detail": "{\"v\":1,\"id\":\"session-cf07d85c-ba7e-4b99-a743-4c953d96741c\"}"
+    },
+    {
+      "id": "REST-C04",
+      "name": "cwd wrong type -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G06",
+      "name": "POST /sessions no token -> 401",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P01",
+      "name": "prompt 200 accepted + messageId + sessionId",
+      "ok": true,
+      "detail": "{\"v\":1,\"accepted\":true,\"messageId\":\"f7a24388-1b72-4077-8a4d-606fe799c75e\",\"sessionId\":\"session-cf07d85c-ba7e-4b99-a743-4c953d96741c\"}"
+    },
+    {
+      "id": "REST-P02a",
+      "name": "idempotent requestId -> same messageId",
+      "ok": true,
+      "detail": "f7a24388-1b72-4077-8a4d-606fe799c75e vs f7a24388-1b72-4077-8a4d-606fe799c75e"
+    },
+    {
+      "id": "REST-P02b",
+      "name": "idempotent requestId (3rd) -> same messageId",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P02c",
+      "name": "NO duplicate enqueue (waitRequestId sees exactly 1 durable msg)",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "REST-P03",
+      "name": "different requestId -> 2 distinct entries (both durable)",
+      "ok": true,
+      "detail": "msgId differ=true rid=1 rid2=1"
+    },
+    {
+      "id": "D2-rest-requestId",
+      "name": "REST: durable user row requestId == sent value",
+      "ok": false,
+      "detail": "users=0 got=[] want=rid-1791673730872-b"
+    },
+    {
+      "id": "D3-rest-single",
+      "name": "REST: one prompt -> exactly 1 durable user row",
+      "ok": false,
+      "detail": "users=0"
+    },
+    {
+      "id": "REST-P04",
+      "name": "missing text -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P05",
+      "name": "text not string -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P06",
+      "name": "blank text -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P07",
+      "name": "missing requestId -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-X05",
+      "name": "cancel idempotent 3x -> 200 ok:true",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PROTO-G13",
+      "name": "non-JSON body -> not 500",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "GAP-06",
+      "name": "unknown session + invalid body -> 404 before 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-P08",
+      "name": "unknown session prompt -> 404",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-X03",
+      "name": "unknown session cancel -> 404",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "REST-R01",
+      "name": "pair/rotate",
+      "ok": null,
+      "detail": "--skip-rotate given"
+    },
+    {
+      "id": "WS-02",
+      "name": "no token -> zero frames then close 4401",
+      "ok": true,
+      "detail": "code=4401 frames=0"
+    },
+    {
+      "id": "WS-03",
+      "name": "wrong token -> zero frames then close 4401",
+      "ok": true,
+      "detail": "code=4401 frames=0"
+    },
+    {
+      "id": "WS-02b",
+      "name": "auth failure judged by close code only (v1.1)",
+      "ok": true,
+      "detail": "GAP-09 ruling applied"
+    },
+    {
+      "id": "WS-01",
+      "name": "valid token -> first frame is hello",
+      "ok": true,
+      "detail": "timeout"
+    },
+    {
+      "id": "WS-04",
+      "name": "hello fields v/server.name/server.version/sessions",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"hello\",\"server\":{\"name\":\"DESKTOP-1V6A47A\",\"version\":\"1.0.0\"},\"sessions\":[{\"id\":\"session-b983dcc3-5ef8-4a8b-8ef6-3e1fa1e72945\",\"title\":\"run test rc-1791673688995\",\"status\":\"running\",\"cre"
+    },
+    {
+      "id": "WS-04b",
+      "name": "hello.sessions items match REST shape",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-05",
+      "name": "ping -> pong <=10s, ts int",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"pong\",\"ts\":1791673757185}"
+    },
+    {
+      "id": "WS-07",
+      "name": "subscribe -> ack (id exact, ok=true)",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c1\",\"ok\":true}"
+    },
+    {
+      "id": "WS-09",
+      "name": "NOT-subscribed session: no message events",
+      "ok": true,
+      "detail": "leaked=0"
+    },
+    {
+      "id": "WS-10",
+      "name": "subscribed session: session.event(kind=message) pushed",
+      "ok": true,
+      "detail": "timeout"
+    },
+    {
+      "id": "WS-13",
+      "name": "session.event fields complete",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"session.event\",\"sessionId\":\"session-cf07d85c-ba7e-4b99-a743-4c953d96741c\",\"event\":{\"kind\":\"message\",\"role\":\"user\",\"text\":\"run test rc-1791673730872\",\"seq\":28,\"ts\":1791673760297,\"status\""
+    },
+    {
+      "id": "D2-ws-event-requestId",
+      "name": "WS session.event carries requestId field",
+      "ok": true,
+      "detail": "[\"kind\",\"role\",\"text\",\"seq\",\"ts\",\"status\",\"messageId\",\"requestId\"]"
+    },
+    {
+      "id": "WS-16",
+      "name": "prompt ack carries sessionId/requestId/messageId (GAP-10)",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c3\",\"ok\":true,\"sessionId\":\"session-cf07d85c-ba7e-4b99-a743-4c953d96741c\",\"requestId\":\"ack-1791673760304\",\"messageId\":\"90e0a2c9-788e-4d4b-8190-764892f79230\"}"
+    },
+    {
+      "id": "WS-17",
+      "name": "WS idempotency: same requestId -> same messageId",
+      "ok": true,
+      "detail": "c3=90e0a2c9-788e-4d4b-8190-764892f79230 c5=90e0a2c9-788e-4d4b-8190-764892f79230"
+    },
+    {
+      "id": "D2-ws-requestId",
+      "name": "WS: durable user row carries requestId == sent value",
+      "ok": false,
+      "detail": "users=0 got=[] want=ack-1791673760304"
+    },
+    {
+      "id": "D3-ws-single",
+      "name": "WS: one prompt -> exactly 1 durable user row",
+      "ok": false,
+      "detail": "users=0"
+    },
+    {
+      "id": "D2-fields",
+      "name": "message row fields = 6 contract keys + requestId",
+      "ok": true,
+      "detail": "[\"seq\",\"role\",\"text\",\"ts\",\"status\",\"messageId\",\"requestId\"]"
+    },
+    {
+      "id": "D2-nonuser-null",
+      "name": "non-user rows have requestId === null",
+      "ok": true,
+      "detail": "[\"system:null\",\"system:null\",\"system:null\",\"assistant:null\",\"tool:null\"]"
+    },
+    {
+      "id": "WS-08",
+      "name": "error frame carries same id + valid code",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c6\",\"code\":\"not_found\",\"message\":\"session sess_nope_zzz not found\"}"
+    },
+    {
+      "id": "WS-19",
+      "name": "prompt invalid field -> error(invalid_request) same id",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c7\",\"code\":\"invalid_request\",\"message\":\"text must be a non-empty string\"}"
+    },
+    {
+      "id": "WS-20",
+      "name": "cancel -> ack id=c4",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c4\",\"ok\":true,\"sessionId\":\"session-cf07d85c-ba7e-4b99-a743-4c953d96741c\"}"
+    },
+    {
+      "id": "WS-21",
+      "name": "cancel unknown session -> error(not_found) same id",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c9z\",\"code\":\"not_found\",\"message\":\"session sess_nope_zzz not found\"}"
+    },
+    {
+      "id": "WS-15a",
+      "name": "unsubscribe -> ack id=c2",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"ack\",\"id\":\"c2\",\"ok\":true}"
+    },
+    {
+      "id": "WS-15",
+      "name": "after unsubscribe: no message events",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-22",
+      "name": "unknown type -> error id=c9 (not silently dropped)",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c9\",\"code\":\"invalid_request\",\"message\":\"unknown frame type \\\"bogus\\\"\"}"
+    },
+    {
+      "id": "WS-33",
+      "name": "v!=1 frame -> handled, connection stays open",
+      "ok": true,
+      "detail": "{\"v\":1,\"type\":\"error\",\"id\":\"c10\",\"code\":\"invalid_request\",\"message\":\"unsupported protocol version v (expected 1)\"}"
+    },
+    {
+      "id": "WS-24",
+      "name": "connection usable after non-JSON frame",
+      "ok": true,
+      "detail": "readyState=1"
+    },
+    {
+      "id": "WS-26a",
+      "name": "3 concurrent conns with same token, all get hello",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-26b",
+      "name": "both clients receive the same event",
+      "ok": true,
+      "detail": "A=true B=true"
+    },
+    {
+      "id": "GAP-13",
+      "name": "ack goes only to originating conn (no broadcast)",
+      "ok": true,
+      "detail": "other conn got 0 frames"
+    },
+    {
+      "id": "WS-28",
+      "name": "closing one conn does not affect the other",
+      "ok": true,
+      "detail": "readyState=1"
+    },
+    {
+      "id": "WS-06",
+      "name": "server does not disconnect after 30s idle",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-09",
+      "name": "echo-prompt accepts {sessionId,text,requestId}",
+      "ok": true,
+      "detail": "{\"v\":1,\"accepted\":true,\"messageId\":\"d5fe08d6-823c-45a2-9bac-7d5a89a3cfd9\",\"sessionId\":\"session-cf07d85c-ba7e-4b99-a743-4c953d96741c\",\"echoed\":true}"
+    },
+    {
+      "id": "HOOK-09b",
+      "name": "echo-prompt idempotent (same requestId -> same messageId)",
+      "ok": true,
+      "detail": "d5fe08d6-823c-45a2-9bac-7d5a89a3cfd9 vs d5fe08d6-823c-45a2-9bac-7d5a89a3cfd9"
+    },
+    {
+      "id": "D3-echo-idempotent",
+      "name": "echo-prompt: 3x same requestId -> same messageId (no new record)",
+      "ok": true,
+      "detail": "d5fe08d6-823c-45a2-9bac-7d5a89a3cfd9 / d5fe08d6-823c-45a2-9bac-7d5a89a3cfd9 / d5fe08d6-823c-45a2-9bac-7d5a89a3cfd9"
+    },
+    {
+      "id": "D3-no-dup-requestId",
+      "name": "history has no duplicate requestId among user rows",
+      "ok": true,
+      "detail": "checked 3 requestIds"
+    },
+    {
+      "id": "HOOK-10",
+      "name": "echo-prompt blank text -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-11",
+      "name": "echo-prompt missing sessionId -> 400",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-03",
+      "name": "hook enabled: POST /rc/v1/_test/busy/{id} -> 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-04",
+      "name": "REST 409 session_busy (via hook)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "WS-18",
+      "name": "WS prompt busy -> error/session_busy with same id, NEVER ack (P0-1)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-12",
+      "name": "?times=1: REST consumes it, WS then succeeds (arming is counted)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-13",
+      "name": "?times=2: REST and WS both get 409",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "HOOK-01-note",
+      "name": "run with --no-hooks separately to prove hooks absent by default",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "PAIR-02a",
+      "name": "gateway.json host exists",
+      "ok": true,
+      "detail": "host=192.168.2.27"
+    },
+    {
+      "id": "PAIR-02b",
+      "name": "host is NOT a virtual adapter (192.168.125.x / 192.168.211.x)",
+      "ok": true,
+      "detail": "host=192.168.2.27 (must be real WLAN)"
+    },
+    {
+      "id": "PAIR-02c",
+      "name": "host == runtime.json peer (single source of truth)",
+      "ok": true,
+      "detail": "gateway.json=192.168.2.27 runtime.json.peer=192.168.2.27"
+    },
+    {
+      "id": "PAIR-03",
+      "name": "gateway.json fp == token[:8]",
+      "ok": true,
+      "detail": "fp=22838e76"
+    },
+    {
+      "id": "PAIR-05",
+      "name": "gateway.json has host/port/token/fp",
+      "ok": true,
+      "detail": "[\"port\",\"host\",\"fp\",\"token\",\"startedAt\",\"pid\"]"
+    },
+    {
+      "id": "PROTO-G10",
+      "name": "token.txt is 32 hex and matches gateway.json",
+      "ok": true,
+      "detail": "match=true"
+    },
+    {
+      "id": "HOOK-14",
+      "name": "runtime.json testHooks == true in this round",
+      "ok": true,
+      "detail": "testHooks=true"
+    }
+  ]
+}

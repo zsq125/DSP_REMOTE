@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  局域网明文 HTTP/WS（规范 §4：局域网明文 + token 即可，不做 TLS）。
+  说明：network-security-config 的 <domain> 不支持 CIDR 网段写法，
+  而手机连的是用户路由器动态分配的局域网 IP（192.168.x.x / 10.x.x.x 都有可能），
+  无法穷举，因此这里对 base-config 放开明文。
+  这是"局域网直连工具"的既定取舍：访问边界由 token（32 位随机）+ 仅局域网暴露保证。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

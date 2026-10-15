@@ -1,0 +1,91 @@
+{
+  "title": "xref @ http://127.0.0.1:8765",
+  "at": "2026-10-10T22:34:24.005Z",
+  "durationMs": 2452,
+  "summary": {
+    "total": 13,
+    "passed": 10,
+    "failed": 3,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "id": "XREF-00",
+      "name": "workspace.json parsed",
+      "ok": true,
+      "detail": "sessions=20"
+    },
+    {
+      "id": "XREF-00b",
+      "name": "found session.v4.jsonl.zstd files",
+      "ok": true,
+      "detail": "count=129"
+    },
+    {
+      "id": "XREF-01",
+      "name": "session set equals (api == workspace.json)",
+      "ok": false,
+      "detail": "missing=11:session-c3a7204d-586d-40df-a64b-ceea1df60be5,session-90308792-16e7-4202-ba7a-98bcb219131a,session-a1361fcc-8229-4e54-a7d2-d1ad127c3c4a,session-9c624bfe-41ab-48d6-9c43-459fddbcc7e9,session-ab788357-558a-4fe6-a94e-5f17a5cd85e7 extra=41:session-9199489e-1a1a-4c83-b869-49a48c22bc8a,session-e337ca2e-fb5f-4795-93a1-f852d5b3e02b,session-8362e884-a030-465b-8152-dcc7688dc347,session-d73ba852-0ab6-4936-a918-155ee7f65411,session-a0d79f2c-0b13-44c0-ab08-c254c0b73e7a"
+    },
+    {
+      "id": "XREF-02",
+      "name": "cwd matches workspace.json",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "XREF-03",
+      "name": "title matches workspace.json (where set)",
+      "ok": false,
+      "detail": "checked=9 session-e1b1924e-1546-4098-8923-b3e8e2e7d616: api=\"分析下你的提示词PROMPT_FOR_NEW_S\" ws=\"craw_job\" | session-0ccf9ebd-2adb-4642-8c12-4938c6652a93: api=\"hi\" ws=\"craw_job\" | session-94ee8332-e22f-4b78-9c16-69e83095304c: api=\"项目目录 F:\\project\\wx_game\\tiga-sur\" ws=\"tiga-survivor_v1\""
+    },
+    {
+      "id": "XREF-04a",
+      "name": "sampled sessions with jsonl found",
+      "ok": true,
+      "detail": "n=3"
+    },
+    {
+      "id": "XREF-04",
+      "name": "messageCount matches jsonl (sampled)",
+      "ok": false,
+      "detail": "bad=2 session-e1b1924e-1546-4098-8923-b3e8e2e7d616 api=33 jsonl=0 | session-0ccf9ebd-2adb-4642-8c12-4938c6652a93 api=2926 jsonl=0 | session-c3a7204d-586d-40df-a64b-ceea1df60be5 missing in api"
+    },
+    {
+      "id": "XREF-05",
+      "name": "message content matches jsonl (sampled)",
+      "ok": true,
+      "detail": "bad=0"
+    },
+    {
+      "id": "XREF-06",
+      "name": "seq monotonic ascending (sampled)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "XREF-08",
+      "name": "PC data files unchanged (read-only)",
+      "ok": true,
+      "detail": "changed=0"
+    },
+    {
+      "id": "XREF-09a",
+      "name": "PID 7072 (user DSH) still alive",
+      "ok": true,
+      "detail": "must not be killed by tests"
+    },
+    {
+      "id": "XREF-09b",
+      "name": "port 3080 still listening",
+      "ok": true,
+      "detail": "user instance must keep serving"
+    },
+    {
+      "id": "XREF-09c",
+      "name": "gateway port 8765 listening",
+      "ok": true,
+      "detail": "gateway bound to 8765, not 3080"
+    }
+  ]
+}

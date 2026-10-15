@@ -1,0 +1,14 @@
+{
+  "WARNING": "DO NOT DELETE ANY SESSION BASED ON THIS FILE.",
+  "warning_zh": "严禁依据本文件删除任何会话。",
+  "reason_zh": "本文件不含权威台账。权威台账是网关内建的 pc-gateway/.state/test-created-sessions.json，其中只登记真正由 POST /rc/v1/sessions 创建的会话。历史上测试方曾用标题模糊匹配（如 *pro*）生成 id 列表，因 'project' 含有 'pro'，误把用户其它项目的真实历史会话混入，若照此删除会毁掉用户真实任务数据。该危险文件已删除，此处仅留事故记录。",
+  "incident": {
+    "date": "2026-10-11",
+    "what": "tests/.evidence/created-sessions-ids.txt 混入 7 个用户真实历史会话（wx_game/tiga-survivor_v1、workbuddyapi2/trae_api、craw_job、h5_autoscripts、special_robot_data_collect 等）",
+    "root_cause": "用 PowerShell -like '*pro*' 过滤会话标题以识别测试会话；'project' 子串含 'pro'，导致所有位于 F:\\project\\* 工作区的既有会话被误判为测试会话",
+    "impact": "未造成实际损失：PM 发现后未使用该文件，改用网关内建台账逐条核对后精确清理，并复查用户 8 个会话完整",
+    "lesson": "登记/清理只能以网关内建台账 test-created-sessions.json 为准；任何基于标题模糊匹配的 id 列表都不可作为删除依据"
+  },
+  "authoritative_source_for_cleanup": "pc-gateway/.state/test-created-sessions.json",
+  "safe_usage_note": "如需确认测试创建了哪些会话，请查询网关台账，或严格匹配标题前缀 ^run test rc-（runner 专用）；不得使用任何模糊匹配。"
+}
