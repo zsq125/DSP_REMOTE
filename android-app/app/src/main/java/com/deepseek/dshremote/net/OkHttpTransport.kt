@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
  * 15s keeps us well inside the gateway's own heartbeat window while detecting a
  * dead peer in a fraction of the 25s app-level ping interval.
  */
-const val WS_PING_INTERVAL_SECONDS = 15L
+const val WS_PING_INTERVAL_SECONDS = 45L
 
 /** OkHttp 实现的 [Transport]（Android 侧）。 */
 class OkHttpTransport(
@@ -32,8 +32,10 @@ class OkHttpTransport(
 ) : Transport {
 
     private val client = OkHttpClient.Builder()
-        // 心跳由应用层自己做（契约 §4：ping 25s / pong 超时 10s），
-        // 这里关掉 OkHttp 的 pingInterval，避免两套心跳互相干扰。
+        // 2026-10-16：15s 太紧 —— 网关跑在 DSH 进程里，事件循环被同步重活（搜索索引/
+        // 历史缓存）挡住时 pong 会迟到 ⇒ OkHttp 直接判死连接（真机实测 50 次重连、
+        // 每次断流都丢一段实时帧，表现为"流式会话跟不上/一直在从旧的加载"）。
+        // 放宽到 45s：既能容忍瞬时卡顿，又能在真死链路上及时发现。
         .pingInterval(WS_PING_INTERVAL_SECONDS, TimeUnit.SECONDS)
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MILLISECONDS)   // 长连接不读超时

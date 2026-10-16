@@ -54,6 +54,8 @@ class ConnectionService : Service() {
         private const val TAG = "DshConnectionService"
         const val CHANNEL_ID = "dsh_connection"
         const val NOTIF_ID = 1001
+        /** 换绑 / 轮换 token：要求服务用新配对重建连接（见 [pairingChanged]）。 */
+        const val ACTION_PAIRING_CHANGED = "com.deepseek.dshremote.action.PAIRING_CHANGED"
         /** startForeground 的硬性时限（规范：5s） */
         const val FOREGROUND_DEADLINE_MS = 5_000L
 
@@ -62,6 +64,19 @@ class ConnectionService : Service() {
 
         fun start(context: Context) {
             val i = Intent(context, ConnectionService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(i)
+            else context.startService(i)
+        }
+
+        /**
+         * 配对信息发生变化（重新配对 / 网关轮换 token）时调用。
+         *
+         * 与 [start] 的区别：这会让服务**丢弃旧连接并用新配对重建**，而不是走幂等的
+         * `ensureConnected()`（后者在已连接时直接返回，连接会一直停在旧 URL / 旧 token 上）。
+         */
+        fun pairingChanged(context: Context) {
+            val i = Intent(context, ConnectionService::class.java)
+                .setAction(ACTION_PAIRING_CHANGED)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(i)
             else context.startService(i)
         }
@@ -94,6 +109,22 @@ class ConnectionService : Service() {
         // ① 5s 内必须 startForeground —— 用「兜底定时器」保证即使后续初始化卡住也不会被系统 ANR/Kill
         armForegroundDeadline()
         ensureForeground()
+
+        // ── 2026-10-16 换绑 / 轮换 token：必须**断开旧连接**并用新配对重建 ──────
+        // 根因：`ensureConnected()` 是幂等的（isConnected 后直接 return），而
+        // ConnectionManager 把 URL 固定在 connect() 那一刻（`url` 字段，重连复用它）。
+        // 所以轮换 token 后服务仍拿**旧 token** 反复重连 → 网关 4401 踢（真机日志实证），
+        // 保活连接永远建不起来。这里给一条显式的"配对变了"路径。
+        if (intent?.action == ACTION_PAIRING_CHANGED) {
+            scope.launch {
+                runCatching { manager?.disconnect() }
+                manager = null
+                bootstrapper?.reset()
+                bootstrapper = null
+                startUp()
+            }
+            return START_STICKY
+        }
 
         // D2 修复：不再用一次性 `started` 标志。原先首次早退（未配对）后该标志已置 true，
         // 之后任何 start() 都不会再驱动建连 ⇒ ConnectionManager 永不创建（WS 永连不上）。

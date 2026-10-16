@@ -20,6 +20,9 @@ build/
 .gradle/
 node_modules/
 
+# Rust sidecar (rc-core): cargo build artifacts, never committed.
+rc-core/target/
+
 # ── 临时产物 ────────────────────────────────────────────────
 .tmp-*
 *.tmp

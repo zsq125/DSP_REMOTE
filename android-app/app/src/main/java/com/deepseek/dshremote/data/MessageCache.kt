@@ -30,8 +30,21 @@ import java.io.File
  */
 object MessageCache {
 
-    /** 单会话最多保留多少行（超出丢最旧）。与 DetailPane 的窗口(1000)对齐。 */
-    const val MAX_ROWS = 1000
+    /**
+     * 单会话最多保留多少行（超出丢最旧）。
+     *
+     * 2026-10-16 用户报告「跳新会话要卡半天才到最新页」：1000 行 + reasoning/tool 正文
+     * 实测单文件 **5MB**，读/解析/写都贵（每次补齐与防抖落盘都要整窗序列化）。
+     * 收敛到 400 行 + 字段截断（见 [cap]），体积降一个量级，秒开才成立。
+     */
+    const val MAX_ROWS = 400
+
+    /** 单个大字段的落盘上限（超出截断）。整窗序列化的成本主要来自这些正文。 */
+    private const val MAX_FIELD_CHARS = 4000
+
+    /** 截断超大字段（`null` 原样返回）。 */
+    private fun cap(s: String?): String? =
+        if (s == null || s.length <= MAX_FIELD_CHARS) s else s.take(MAX_FIELD_CHARS) + "…[cache-truncated]"
 
     private const val DIR = "history"
 
@@ -111,18 +124,18 @@ object MessageCache {
     private fun encodeRow(r: MessageRow): JSONObject = JSONObject().apply {
         put("seq", r.seq)
         put("role", r.role)
-        put("text", r.text)
+        put("text", cap(r.text))
         put("ts", r.ts)
         put("status", r.status)
         put("messageId", r.messageId ?: JSONObject.NULL)
         put("requestId", r.requestId ?: JSONObject.NULL)
         put("kind", r.kind)
-        put("reasoning", r.reasoning ?: JSONObject.NULL)
+        put("reasoning", cap(r.reasoning) ?: JSONObject.NULL)
         put("hasReasoning", r.hasReasoning)
         put("toolName", r.toolName ?: JSONObject.NULL)
         put("toolCallId", r.toolCallId ?: JSONObject.NULL)
-        put("toolInput", r.toolInput ?: JSONObject.NULL)
-        put("toolOutput", r.toolOutput ?: JSONObject.NULL)
+        put("toolInput", cap(r.toolInput) ?: JSONObject.NULL)
+        put("toolOutput", cap(r.toolOutput) ?: JSONObject.NULL)
         put("collapsedSummary", r.collapsedSummary)
     }
 

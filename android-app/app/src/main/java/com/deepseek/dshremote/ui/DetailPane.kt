@@ -133,6 +133,17 @@ internal fun DetailPane(
      * unmount 也不丢。切换会话/tab ⇒ 各自恢复自己的草稿，互不串台。
      */
     drafts: androidx.compose.runtime.snapshots.SnapshotStateMap<String, String>,
+    /**
+     * 2026-10-16「点击会话不是每次都能显示到最新页」：用户**再点一次当前会话**时
+     * 调用方把该值 +1 ⇒ 这里强制重新加载最新页（顺带退出搜索定位窗口）。
+     */
+    newestNonce: Int = 0,
+    /**
+     * 2026-10-16：发送前回调 —— 让宿主**重发一次 subscribe**，确保网关的 follow
+     * 循环活着，否则这次发送触发的新回合事件一个都推不回来（用户报告：发完消息
+     * 内容一直不更新，切走再回来才有）。
+     */
+    onAfterSend: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val api = remember { GatewayApi() }
@@ -165,6 +176,11 @@ internal fun DetailPane(
     var cacheNewestSeq by remember(displayId) { mutableStateOf<Long?>(null) }
     /** 本次打开是否真的命中过本地缓存（决定后台补齐的停止条件）。 */
     var restoredFromCacheState by remember(displayId) { mutableStateOf(false) }
+    /**
+     * 缓存新端与网关最新页之间还有"断档"待补（离线期间落下的消息）。
+     * 2026-10-16：断档补齐从 `loadFirst`（同步、阻塞首屏）挪到后台执行，本标志是开关。
+     */
+    var needGapFill by remember(displayId) { mutableStateOf(false) }
     var loadPhase by remember(displayId) { mutableStateOf(DetailPhase.Idle) }
     var loadError by remember(displayId) { mutableStateOf<String?>(null) }
     val progress = remember(displayId) { ProgressiveLoadState(firstBatch = 30) }
@@ -187,6 +203,12 @@ internal fun DetailPane(
     // after any data change the layout is stale, so it read `false` and silently
     // disabled following on many sessions.
     var userScrolledAway by remember(displayId) { mutableStateOf(false) }
+    /**
+     * 2026-10-16 用户报告「经常需要手动滑到最新 / 有时候还不更新」：
+     * 用户上划看历史后，实时帧其实**一直在追加**（只是不跟随），屏幕看着像"不更新"，
+     * 而且没有任何提示。本标志 = "离开底部期间又来了新消息"，用来显示「有新消息 ↓」。
+     */
+    var pendingNew by remember(displayId) { mutableStateOf(false) }
 
     /** Bumped after every load so the viewport lands on the newest row. */
     var followNonce by remember(displayId) { mutableStateOf(0) }
@@ -293,6 +315,7 @@ internal fun DetailPane(
             if (atBottom && !wasAtBottom) {
                 if (userScrolledAway) {
                     userScrolledAway = false
+                    pendingNew = false          // 已回到最新 ⇒ 未读提示清零
                     DshTrace.log("  back-at-bottom: following resumed")
                 }
             }
@@ -335,6 +358,7 @@ internal fun DetailPane(
         DshTrace.log("  loadFirst enter sid=${target.id} gen=$r_gen")
         loadPhase = DetailPhase.Loading
         loadError = null
+        pendingNew = false          // 重新加载 ⇒ 未读提示清零（否则会残留一个假"有新消息"）
         // ⚠ `before` is deliberately NOT passed: it means "older history".
         // The first screen must always be the NEWEST page (contract verified:
         // limit-only => latest N). Passing a cursor here is what made the UI show
@@ -376,6 +400,11 @@ internal fun DetailPane(
                 is RestResult.Ok -> {
                     if (r_gen != loadGen) {   // 栈顶易主：本响应作废
                         DshTrace.log("loadFirst STALE (gen=$r_gen < loadGen=$loadGen) aroundSeq branch — dropped")
+                        // ⚠ 2026-10-16 必须**照样消费**定位请求：否则 focusRequest 会
+                        //   永久留在调用方，之后每一次重载都又走定位分支 ⇒ 视口永远停在
+                        //   命中处、实时帧永远被丢弃（真机现象："跳不到最新页，一直在从
+                        //   旧的加载"）。
+                        onFocusConsumed()
                         return@load
                     }
                     pager.resetAround(r.value.items, r.value.prevCursor, r.value.nextAfter, r.value.hasNewer)
@@ -418,29 +447,14 @@ internal fun DetailPane(
                     nextCursor = r.value.prevCursor
                     hasMore = r.value.prevCursor != null
                 } else if (restoredFromCache && isCacheUsable(r.value.items)) {
-                    // ★ 用户优化 1：已有本地缓存 ⇒ 网络只做**增量对账**：
-                    //   ①先用 `after=<缓存新端>` 把离线期间落下的消息（断档）补齐；
-                    //   ②再并入最新页。绝不清空/重排已显示的历史。
-                    //   向上翻页游标仍用缓存的最旧 seq，从本地最深索引继续往更早走。
-                    val gapFrom = cacheNewestSeq
-                    var filled = 0
-                    if (gapFrom != null) {
-                        var guard = 0
-                        var cur: Long? = gapFrom
-                        while (cur != null && guard++ < 12) {
-                            val g = api.messages(
-                                baseUrl, token, target.id,
-                                limit = BACKFILL_PAGE_LIMIT, after = cur,
-                            )
-                            if (g is RestResult.Err) break
-                            val gp = (g as RestResult.Ok).value
-                            if (gp.items.isEmpty()) break
-                            filled += pager.mergeNewer(gp.items)
-                            cur = gp.nextAfter
-                            if (gp.hasNewer != true) break
-                        }
-                    }
+                    // ★ 用户优化 1：已有本地缓存 ⇒ 网络只做**增量对账**（并入最新页），
+                    //   绝不清空/重排已显示的历史。
+                    // ⚠ 2026-10-16 用户报告「跳新会话要卡半天才到最新页」根因之一：
+                    //   断档补齐（`after=` 最多 12 页 × 200 条）原本**串行跑在这里**，
+                    //   把首屏活活拖住（真机见过 gapFilled=429）。现在只并最新页，
+                    //   断档交给后台补齐（见 backfill effect 的 gap-fill 段）。
                     val added = pager.mergeNewer(r.value.items)
+                    needGapFill = cacheNewestSeq != null
                     if (cacheReachedStart) {
                         hasMore = false
                     } else {
@@ -448,8 +462,8 @@ internal fun DetailPane(
                         hasMore = cacheOldestSeq != null
                     }
                     DshTrace.log(
-                        "loadFirst MERGE-NEWER sid=${target.id} gapFilled=$filled added=$added " +
-                            "oldest=$cacheOldestSeq reachedStart=$cacheReachedStart"
+                        "loadFirst MERGE-NEWER sid=${target.id} added=$added " +
+                            "oldest=$cacheOldestSeq reachedStart=$cacheReachedStart gapPending=$needGapFill"
                     )
                 } else {
                     pager.reset(r.value.items, r.value.nextCursor)
@@ -459,8 +473,10 @@ internal fun DetailPane(
                     cacheNewestSeq = pager.newestDurableSeq
                     cacheReachedStart = r.value.nextCursor == null
                 }
-                // Progressive: render the newest 30 first, then fill the window.
-                progress.onFirstBatch(pager.retainedCount)
+                // Progressive: 有缓存时**保持整窗可见**（缓存早已上屏，缩回 30 条
+                // 纯属倒退，还会造成一次可感知的重排）；只有"纯网络首屏"才先渲染 30 条。
+                if (restoredFromCache) progress.resync(pager.retainedCount)
+                else progress.onFirstBatch(pager.retainedCount)
                 visibleCount = progress.visibleCount
                 loadPhase = DetailPhase.Idle
                 // Jump to the very bottom AFTER the items exist. LazyColumn needs a
@@ -542,6 +558,34 @@ internal fun DetailPane(
             com.deepseek.dshremote.core.DshTrace.log("loadFirst retry sid=${activeSession.id}")
             launchLoad(activeSession)
         }
+    }
+
+    // ── 2026-10-16「点击会话不是每次都能显示到最新页」修复 ────────────────
+    // 用户**再点一次当前会话**（selectedId 不变 ⇒ 正常路径不会重载）时，
+    // 强制重新加载最新页：既回到最新，又顺带退出搜索定位窗口（nextAfter 归 null，
+    // 实时帧才会重新被接收）。
+    LaunchedEffect(newestNonce) {
+        if (newestNonce == 0) return@LaunchedEffect
+        userScrolledAway = false
+        pendingNew = false
+        DshTrace.log("newest-nonce -> reload newest sid=${activeSession.id}")
+        onLoaded(null)
+        launchLoad(activeSession)
+    }
+
+    /**
+     * 点「有新消息 ↓」时**不直接在点击回调里重载**：那一帧读到的 `focusSeq` 还是旧值
+     * （状态更新尚未重组），会再次开成定位窗口 ⇒ 帧继续被丢弃（真机实测踩到）。
+     * 改成 nonce：本 effect 在重组之后运行，读到的参数才是最新的（focusSeq 已为 null）。
+     */
+    var forceNewestNonce by remember(displayId) { mutableStateOf(0) }
+    LaunchedEffect(forceNewestNonce) {
+        if (forceNewestNonce == 0) return@LaunchedEffect
+        userScrolledAway = false
+        pendingNew = false
+        onLoaded(null)
+        DshTrace.log("force-newest reload focusSeq=$focusSeq sid=${activeSession.id}")
+        launchLoad(activeSession)
     }
 
     // ── 2026-10-14 用户报告：长时间不进应用，回来后当前会话不显示最新，必须
@@ -708,6 +752,30 @@ internal fun DetailPane(
         if (loadPhase != DetailPhase.Idle) return@LaunchedEffect
         if (focusSeq != null) return@LaunchedEffect          // 定位窗口不做补齐
         if (cacheReachedStart) return@LaunchedEffect
+        // ── ① 断档补齐（**后台**，2026-10-16 从 loadFirst 挪出来）────────────
+        // 缓存新端 → 网关最新之间落下的消息。原先它串行跑在首屏路径里，把"跳到
+        // 最新页"活活拖慢；现在放在首屏之后静默补，用户无感。
+        if (needGapFill) {
+            needGapFill = false
+            var cur: Long? = cacheNewestSeq
+            var guard = 0
+            while (cur != null && guard++ < 6) {
+                val g = api.messages(
+                    baseUrl, token, activeSession.id,
+                    limit = BACKFILL_PAGE_LIMIT, after = cur,
+                )
+                if (g is RestResult.Err) break
+                val gp = (g as RestResult.Ok).value
+                if (gp.items.isEmpty()) break
+                val added = pager.mergeNewer(gp.items)
+                DshTrace.log("gap-fill after=$cur added=$added nextAfter=${gp.nextAfter}")
+                if (added > 0 && !userScrolledAway) followNonce++
+                cur = gp.nextAfter
+                if (gp.hasNewer != true) break
+                if (added == 0) break
+            }
+            cacheNewestSeq = pager.newestDurableSeq
+        }
         // 每次进入最多补 8 页（limit=200 ⇒ 最多 1600 条），补完 tick 再触发下一轮，
         // 避免一口气把网关和磁盘打满，同时保证「动态同步」持续推进。
         var rounds = 0
@@ -741,10 +809,16 @@ internal fun DetailPane(
                 "backfill before=$cursor added=$added next=${page.nextCursor} " +
                     "oldest=${pager.oldestDurableSeq} vis=$visibleCount"
             )
-            persistCache()
+            // ⚠ 不再每页落盘：整窗序列化（可达数 MB）会把 IO 打满、拖慢后续补页。
+            //   落盘交给下面那个 1.5s 防抖 effect，本批补完再落一次。
             backfillTick++
+            // 补齐期间保持"贴底"：窗口在**上方**变长，视口若不重新贴底就可能停在
+            // 中途（表现为"点开会话不是最新页，要手动滑"）。用户主动离开时不打扰。
+            if (!userScrolledAway) followNonce++
             if (added == 0 && page.nextCursor == null) break
         }
+        // 本批补齐结束：落盘一次（批内不再逐页写）。
+        persistCache()
     }
 
     // 缓存落盘（**防抖**）：key 一变就重启本协程 ⇒ 流式打字机期间不断被取消，
@@ -776,6 +850,11 @@ internal fun DetailPane(
             // 把缺口补齐后，nextAfter 归 null，实时流自然恢复。
             if (pager.nextAfter != null) {
                 DshTrace.log("  appendLive DROPPED (focus window) sid=${f.sessionId} seq=${f.seq}")
+                // ★ 2026-10-16「实时输出的会话更跟不上、跳不到最新页」：
+                //   搜索定位窗口下帧被**按设计丢弃**，但 `userScrolledAway` 是 false
+                //   ⇒ 连「有新消息 ↓」都不显示，看着就是"一直在从旧的加载"。
+                //   这里补上未读标记：让用户一眼看到并且一键回到最新页。
+                pendingNew = true
                 continue
             }
             val status = f.status ?: "final"
@@ -814,6 +893,8 @@ internal fun DetailPane(
                 // 气泡逐字长高时屏幕不往下跟。用独立 tick 每帧触发一次跟随
                 // （同帧多次自增被 Compose 合并，天然每帧最多滚一次）。
                 liveFollowTick++
+                // 用户已离开底部 ⇒ 记一笔"有新消息"，让界面能显示「有新消息 ↓」。
+                if (userScrolledAway) pendingNew = true
             }
         }
     }
@@ -903,6 +984,10 @@ internal fun DetailPane(
                         var lastY = down.position.y
                         var dyAccum = 0f
                         var awayMarked = false
+                        // 手势开始时的首个可见行：只有**列表真的动了**才算用户翻历史。
+                        // （否则在内容不足一屏/只是手指抖动时，一过阈值就静默停止跟随，
+                        //   表现为"点开会话后经常停在半路、要手动滑到最新"。）
+                        val startIdx = listState.firstVisibleItemIndex
                         while (true) {
                             val event = awaitPointerEvent(PointerEventPass.Initial)
                             val change = event.changes.firstOrNull { it.id == down.id }
@@ -914,24 +999,28 @@ internal fun DetailPane(
                             // 上划累计超过阈值 ⇒ 立刻标记"用户在翻历史"，滚动期间
                             // 不再被实时帧拽回底部（不必等抬手，抬手时视口已被拽走）。
                             if (!awayMarked && dyAccum < -28f) {
-                                awayMarked = true
-                                userScrolledAway = true
-                                DshTrace.log(
-                                    "  userScrolledAway -> true reason=drag-up " +
-                                        "dy=$dyAccum first=${listState.firstVisibleItemIndex}"
-                                )
+                                val moved = listState.firstVisibleItemIndex != startIdx ||
+                                    listState.canScrollBackward
+                                if (moved) {
+                                    awayMarked = true
+                                    userScrolledAway = true
+                                    DshTrace.log(
+                                        "  userScrolledAway -> true reason=drag-up " +
+                                            "dy=$dyAccum first=${listState.firstVisibleItemIndex}"
+                                    )
+                                }
                             }
                         }
-                        // 抬手兜底：慢速上划没到阈值但确实离开了底部。
-                        if (!awayMarked) {
-                            val last = minOf(visibleCount, pager.retainedCount) - 1
-                            if (last >= 0 && listState.firstVisibleItemIndex < last) {
-                                userScrolledAway = true
-                                DshTrace.log(
-                                    "  userScrolledAway -> true reason=gesture " +
-                                        "from=${listState.firstVisibleItemIndex}"
-                                )
-                            }
+                        // 抬手兜底：只有**列表真的被滚动了**才算用户离开底部。
+                        // ⚠ 旧条件 `firstVisibleItemIndex < last` 是错的：内容不足一屏时
+                        //   首行恒为 0、last 是"最后一行下标"(如 29) ⇒ **随便点一下消息区**
+                        //   就会静默关闭跟随（真机现象：经常要手动滑到最新 / 看着不更新）。
+                        if (!awayMarked && listState.firstVisibleItemIndex != startIdx) {
+                            userScrolledAway = true
+                            DshTrace.log(
+                                "  userScrolledAway -> true reason=gesture " +
+                                    "from=$startIdx to=${listState.firstVisibleItemIndex}"
+                            )
                         }
                     }
                 },
@@ -984,6 +1073,39 @@ internal fun DetailPane(
                     }
                 },
             )
+        }
+        // ── 2026-10-16「有时候还不更新」的可见化 + 一键修复 ───────────────
+        // 两种情形都要提示：①用户上划看历史；②搜索定位窗口（帧被按设计丢弃）。
+        // 此前后者没有任何提示，实时输出的会话看起来就是"永远停在旧内容"。
+        if (pendingNew) {
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 12.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(c.selectedBackground)
+                    .clickable {
+                        pendingNew = false
+                        userScrolledAway = false
+                        // 定位窗口要真正回到最新页：**先清掉调用方的定位请求**，再用 nonce
+                        // 触发重载（点击这一帧读到的 focusSeq 还是旧值，直接 launchLoad 会
+                        // 又开成定位窗口 —— 真机实测踩到）。
+                        if (pager.nextAfter != null) {
+                            onFocusConsumed()
+                            forceNewestNonce++
+                        } else {
+                            followNonce++
+                        }
+                        DshTrace.log("  jump-to-newest tapped focus=${pager.nextAfter != null}")
+                    }
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    "有新消息 ↓",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = c.onSelectedText,
+                )
+            }
         }
         } // ── 消息区 Box（LazyColumn + 小横线 overlay）──
 
@@ -1096,6 +1218,8 @@ internal fun DetailPane(
                             sendError = null
                             drafts.remove(activeSession.id)   // 清该会话草稿
                             scope.launch { listState.scrollToItem(maxOf(0, pager.visible(visibleCount).size - 1)) }
+                            // ★ 发送前先确保订阅活着（网关 follow 死掉就收不到本回合事件）。
+                            onAfterSend()
                             // ② fire the request
                             scope.launch {
                                 when (val r = api.prompt(baseUrl, token, activeSession.id, text, rid)) {

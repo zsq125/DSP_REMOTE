@@ -1,0 +1,24 @@
+[package]
+name = "rc-core"
+version = "0.1.0"
+edition = "2021"
+description = "Out-of-process heavy-work core for the DSP_REMOTE gateway (zero-contention sidecar)"
+publish = false
+
+[dependencies]
+# JSON only (no derive needed: responses are built with the json! macro).
+serde_json = "1"
+# Pure-Rust zstd decoder: no C toolchain required, so the build is deterministic
+# on any Windows box that only has rustc/cargo.
+ruzstd = "0.7"
+# Small blocking HTTP server: no async runtime, no tokio, tiny dependency tree.
+tiny_http = "0.12"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+# A crash in the sidecar must never be able to affect the host process tree in a
+# confusing way: abort fast, let the supervisor restart us.
+panic = "abort"
+strip = true

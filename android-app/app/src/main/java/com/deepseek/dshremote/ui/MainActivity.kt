@@ -138,6 +138,8 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
     //       ② 扫码页真正接上（相机权限由 ScannerScreen 内部按需申请）。
     var repairing by remember { mutableStateOf(false) }
     var scannerOpen by remember { mutableStateOf(false) }
+    /** 再点同一会话 ⇒ 让右栏回到最新页（见 onSelect）。 */
+    var newestNonce by remember { mutableStateOf(0) }
     /** 配对成功后的统一落库 + 生效（手动输入 / 扫码共用一条路径）。 */
     val applyPairing: (PairingInfo) -> Unit = { info ->
         scope.launch {
@@ -148,7 +150,9 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
             repairing = false
             scannerOpen = false
             paired = true
-            ConnectionService.start(context)
+            // 告知服务「配对变了」：让它丢弃旧连接、用新 token 重建保活长连接。
+            // （只调 start() 会走幂等的 ensureConnected()，连接会卡在旧 token 上。）
+            ConnectionService.pairingChanged(context)
         }
     }
 
@@ -394,21 +398,20 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
         }
         loadedWorkspacePaths += ws.path
         DshTrace.log("expand ws=${ws.path} req=partial cached=false")
-        val disk = kotlinx.coroutines.runBlocking { readDiskSessions() }
-        if (disk.isNotEmpty()) {
-            showDisk(disk)
-            // 缓存命中：网络刷新**静默后台**，绝不阻塞列表显示。
-            scope.launch {
-                when (val r = repo.sessionsFor(ws)) {
-                    is RestResult.Ok -> mergeSilent(r.value)
-                    is RestResult.Err -> Unit
-                }
-            }
-        } else {
-            // 缓存为空（首次展开该工作区）：同步等网络，然后正常上屏。
-            scope.launch {
-                when (val r = repo.sessionsFor(ws)) {
-                    is RestResult.Ok -> {
+        // ★★ 2026-10-16 用户报告「展开只有几个会话也卡」根因：这里原本是
+        //    `val disk = runBlocking { readDiskSessions() }` —— **在点击回调里同步读
+        //    DataStore**（磁盘 IO + 反序列化整张 per-workspace 会话表）。会话多少
+        //    无关紧要，卡的是**主线程被阻塞**。
+        //    现在全部异步：展开立刻返回（列表立即可交互），缓存与网络都在协程里上屏。
+        scope.launch {
+            val disk = readDiskSessions()
+            if (disk.isNotEmpty()) showDisk(disk)
+            when (val r = repo.sessionsFor(ws)) {
+                is RestResult.Ok -> {
+                    if (disk.isNotEmpty()) {
+                        mergeSilent(r.value)             // 缓存已有 ⇒ 只在真有变化时重绑
+                    } else {
+                        // 首次展开（无缓存）：直接上屏 + 落盘 + 自动选中第一个主会话
                         val fresh = r.value
                         val others = allSessions.filter { s -> s.cwd != ws.path }
                         allSessions = others + fresh
@@ -419,7 +422,6 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
                             )
                         }
                         DshTrace.log("expand ws=${ws.path} done added=${fresh.size} total=${allSessions.size}")
-                        // 展开后自动选中该工作区的第一个主会话，避免右栏空白。
                         if (selectedId == null) {
                             val first = SubagentTree.mainSessionsOnly(fresh).firstOrNull()
                                 ?: fresh.firstOrNull()
@@ -433,8 +435,8 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
                             }
                         }
                     }
-                    is RestResult.Err -> Unit
                 }
+                is RestResult.Err -> Unit
             }
         }
     }
@@ -453,6 +455,23 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
     var appWs by remember(baseUrl, token) { mutableStateOf<OkHttpTransport?>(null) }
     val subscription = remember(baseUrl, token) {
         SessionSubscriptionManager(send = { appWs?.send(it) ?: false })
+    }
+
+    // ── 2026-10-16 用户报告「实时输出的会话更跟不上、跳不到最新页」──────────
+    // 流式会话实测 **≈50 帧/秒**，而每一帧都会：换一个 liveEvents 列表 → 重启
+    // DetailPane 的消费协程 → 重组 → 再触发一次 scrollToNewest。项目里其实早就写好
+    // 了合帧器 `EventBatcher`（规范 §9.3 要求 ≤100ms 合批），但**从未接线**。
+    // 这里把它接上：窗口内的帧攒成一批一次性投递 ⇒ UI 刷新次数降到 ~10 次/秒。
+    val eventBatcher = remember(baseUrl, token) {
+        EventBatcher(windowMs = 100L, clock = { System.currentTimeMillis() }) { batch ->
+            liveEvents = batch
+        }
+    }
+    LaunchedEffect(baseUrl, token) {
+        while (true) {
+            kotlinx.coroutines.delay(40)
+            eventBatcher.tick()
+        }
     }
 
     // ★ Owned here, NOT inside DetailPane: the pane unmounts whenever `selected`
@@ -541,9 +560,34 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
         subscription.switchTo(subscribedId, epoch)
     }
 
+    // ── 2026-10-16「自己发完消息后不更新，切到别的会话再回来才更新」根治兜底 ──
+    // 网关侧真因：每个会话的 follow 循环在会话**空闲时会结束**（`for await` 迭代完），
+    // 而 `#subscribe` 只在「首位订阅者」或「该会话没有 follow」时才重启它 ⇒ follow
+    // 一死，这个会话之后的所有事件（含用户自己发消息触发的新回合）都不再推给手机；
+    // 切走再回来会重新 subscribe ⇒ 表现出"切一下就好了"。
+    // App 侧兜底：每 5s 对当前会话**重发一次 subscribe**（网关对"已有 follow"是 no-op，
+    // 对"follow 已死"会立即重建）⇒ 自愈，无需重启网关/DSH。
+    LaunchedEffect(subscribedId, readyForWs) {
+        if (!readyForWs || subscribedId == null) return@LaunchedEffect
+        while (true) {
+            kotlinx.coroutines.delay(5000)
+            // 只在 socket 已打开时重发：断线期间 emit 只会压进 pending 队列，
+            // 每 5s 塞一帧会让队列只增不减（实测 pending=1/2/3 持续增长）。
+            if (subscription.isOpen) {
+                subscription.switchTo(subscribedId, subscription.currentGeneration())
+            }
+        }
+    }
+
     // The socket is keyed on READINESS only, not on the selected session: a switch
     // must swap the subscription target, not pay for a new WebSocket handshake.
-    DisposableEffect(readyForWs) {
+    // ⚠ 2026-10-16 用户报告「PC 端更新了，会话里不自动刷新，切走再回来才有」：
+    // 根因就是这里只 key 了 `readyForWs`（布尔）。重新配对/轮换 token 后 token **变了
+    // 但布尔仍是 true** ⇒ 本 effect 不重跑 ⇒ 连接仍是**旧 token** 建的那条，被网关
+    // 4401 踢掉后还一直拿旧 URL 重连（真机日志实证：反复 onClosed 4401），App 侧
+    // appWs/subscription 又已按新 token 重建 ⇒ 永远收不到实时帧（切会话走 REST 才有数据）。
+    // 修法：把 baseUrl/token 一起作为 key —— 连接身份变了就重建 socket。
+    DisposableEffect(readyForWs, baseUrl, token) {
         if (!readyForWs) {
             DshTrace.log("effect SKIP not-ready baseUrlEmpty=${baseUrl.isEmpty()} tokenEmpty=${token.isEmpty()}")
             return@DisposableEffect onDispose { }
@@ -566,7 +610,9 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
                     is ServerFrame.SessionStatus -> liveStatus = f.sessionId to f.status
                     // Ownership filtering happens inside the manager: events for any
                     // other session are dropped, never misapplied.
-                    is ServerFrame.SessionEvent -> liveEvents = subscription.onText(text)
+                    is ServerFrame.SessionEvent ->
+                        // 不再"一帧一投递"：先入合帧器，由 100ms 窗口统一投递（见上面）。
+                        subscription.onText(text).forEach { eventBatcher.offer(it) }
                     else -> Unit
                 }
             }
@@ -686,6 +732,11 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
                                 }
                             },
                             onSelect = { s ->
+                                // ★ 2026-10-16 用户报告「点击会话不是每次都能直接显示到最新页」：
+                                //   再点**当前已在看的**会话时，`selectedId` 没变 ⇒ 面板不重载 ⇒
+                                //   若此前上划过（或处于搜索定位窗口）就停在半路。这里显式
+                                //   触发一次"回到最新页"。
+                                if (s.id == selectedId) newestNonce++
                                 selectedId = s.id
                                 tree.focusSession(s.id, workspaceIdOfSessions(workspaces, allSessions))
                                 treeVersion++
@@ -757,6 +808,14 @@ fun DshRemoteRoot(onRequestCamera: () -> Unit) {
                             focusSeq = focusRequest?.takeIf { it.first == selected.id }?.second,
                             onFocusConsumed = { focusRequest = null },
                             drafts = sessionDrafts,
+                            newestNonce = newestNonce,
+                            onAfterSend = {
+                                // 发送前重发 subscribe：网关 follow 已死时立刻重建，
+                                // 否则这一回合的流式事件全部收不到（用户报告的现象）。
+                                subscribedId?.let {
+                                    subscription.switchTo(it, subscription.currentGeneration())
+                                }
+                            },
                         )
                     }
                 }

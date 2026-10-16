@@ -70,6 +70,14 @@ class SessionSubscriptionManager(
     var subscribed: Boolean = false
         private set
 
+    /**
+     * 当前 socket 是否已打开（2026-10-16）。
+     *
+     * 心跳重订阅必须据此判断：断线期间 `emit` 只会把帧压进 `pending` 队列
+     * （等 onOpen 才 flush），每 5s 塞一帧会让队列**只增不减**。
+     */
+    val isOpen: Boolean get() = opened
+
     private var opened = false
 
     /**
